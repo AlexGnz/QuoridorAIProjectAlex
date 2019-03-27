@@ -8,7 +8,7 @@ from IA_partie2 import *
 
 N = 5             # N*N board
 WALLS = 3         # number of walls each player has
-EPS = 0.3         # epsilon in epsilon-greedy
+EPS = 0.2         # epsilon in epsilon-greedy
 ALPHA = 0.4       # learning_rate
 LAMB = 0.9        # lambda for TD(lambda)
 LS = 'Q-learning' # default learning strategy
@@ -223,12 +223,14 @@ class Player_AI():
         self.score = 0        
         self.NN = NN        
         self.eps = eps        
-        self.learning_strategy = learning_strategy        
+        self.learning_strategy = learning_strategy
+        self.numberTrains = 0
             
-    def makeMove(self, board):                                
-        return makeMove(listMoves(board, self.color), board, self.color, self.NN, self.eps, self.learning_strategy)
+    def makeMove(self, board):
+        return makeMove(listMoves(board, self.color), board, self.color, self.NN, self.eps, self.learning_strategy, self.numberTrains)
 
-    def endGame(self, board, won):                            
+    def endGame(self, board, won):
+        self.numberTrains += 1
         endGame(board, won, self.NN, self.learning_strategy) 
 
 
