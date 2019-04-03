@@ -27,7 +27,7 @@ def backpropagation(s, NN, delta, learning_strategy=None):
         return None
     W_int = NN[0]
     W_out = NN[1]                   
-    P_int = sigmoid(np.dot(W_int,s))                
+    P_int = sigmoid(np.dot(W_int,s))
     p_out = sigmoid(P_int.dot(W_out))
     #Avec tangente hyperbolique
     grad_out = 1 - p_out**2
@@ -58,8 +58,7 @@ def makeMove(moves, s, color, NN, eps, learning_strategy=None, numberTrains = 0)
     TD_lambda = (not learning_strategy is None) and (learning_strategy[0] == 'TD-lambda')
     # Epsilon greedy
     # Quand on compare 2 IA, on n'utilise plus cette formule
-    if eps != 0.05:
-        eps = max((0.9999**numberTrains) * eps, EPS_MIN)
+    eps = max((0.99**numberTrains) * eps, EPS_MIN)
     greedy = random.random() > eps
     #print(eps)
 

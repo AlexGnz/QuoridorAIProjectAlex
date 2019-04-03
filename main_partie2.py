@@ -71,7 +71,7 @@ def waitForKey():
 def wait(timeout):
     rlist, wlist, xlist = select([sys.stdin], [], [], timeout)
     
-def progressBar(i, n):    
+def progressBar(i, n):
     if int(100*i/n) > int(100*(i-1)/n):
         print('  ' + str(int(100*i/n))+'%', end='\r')
 
@@ -230,6 +230,7 @@ class Player_AI():
         return makeMove(listMoves(board, self.color), board, self.color, self.NN, self.eps, self.learning_strategy, self.numberTrains)
 
     def endGame(self, board, won):
+        #print(self.numberTrains)
         self.numberTrains += 1
         endGame(board, won, self.NN, self.learning_strategy) 
 
