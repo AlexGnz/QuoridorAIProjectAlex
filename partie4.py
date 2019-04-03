@@ -4,7 +4,7 @@
 import copy, os, time, sys, random, time
 from select import select
 import numpy as np
-from IA_partie2 import *
+from IA_partie4 import *
 
 N = 5  # N*N board
 WALLS = 3  # number of walls each player has
@@ -14,6 +14,7 @@ LAMB = 0.9  # lambda for TD(lambda)
 LS = 'Q-learning'  # default learning strategy
 G = None  # graph of board (used for connectivity checks)
 G_INIT = None  # graph of starting board
+TYPE = 'SIGMOID'
 
 # KEYS
 UP = '\x1b[A'
@@ -232,12 +233,12 @@ class Player_AI():
 
     def makeMove(self, board):
         return makeMove(listMoves(board, self.color), board, self.color, self.NN, self.eps, self.learning_strategy,
-                        self.numberTrains)
+                        self.numberTrains, TYPE)
 
     def endGame(self, board, won):
         # print(self.numberTrains)
         self.numberTrains += 1
-        endGame(board, won, self.NN, self.learning_strategy)
+        endGame(board, won, self.NN, self.learning_strategy, TYPE)
 
 
 def listEncoding(board):
@@ -573,7 +574,7 @@ def playGame(player1, player2, show=False, delay=0.0):
             for i in range(2):
                 if players[i].name == 'IA':
                     # jeu en cours est humain contre IA, on affiche estimation probabilité de victoire pour blanc selon IA
-                    p = forwardPass(board, players[i].NN)
+                    p = forwardPass(board, players[i].NN, TYPE)
                     msg += '\nEstimation IA : ' + "{0:.4f}".format(p)
                     msg += '\n'
             display(board, msg)
@@ -658,7 +659,7 @@ def play(player1, player2, delay=0.2):
 
 
 def main():
-    global N, WALLS, EPS, ALPHA, LAMB, LS, G, G_INIT
+    global N, WALLS, EPS, ALPHA, LAMB, LS, G, G_INIT, TYPE
     NN = None
     while True:
         ### Message d'accueil
@@ -695,6 +696,7 @@ def main():
              ['eps 0.2', "# change la valeur de eps pour l'apprentissage (idem pour alpha, lambda)"],
              ['TD-lambda', "# choisit la stratégie d'apprentissage TD-lambda"],
              ['Q-learning', "# choisit la stratégie d'apprentissage Q-learning"],
+             ['type', "# choisit la fonction d'activation utilisée (SIGMOID, RELU, TANH, LRELU, ou SWISH)"],
              ['quit', ""]]
         offset1 = 2
         offset2 = 35
@@ -775,6 +777,8 @@ def main():
                 LS = 'Q-learning'
             elif L[0] == 'TD-lambda' and len(L) == 1:
                 LS = 'TD-lambda'
+            elif L[0] == 'type' and len(L) == 2:
+                TYPE = L[1]
             elif L[0] == 'quit':
                 quit(0)
 

@@ -3,11 +3,33 @@ import random
 
 EPS_MIN = 0.06  # the lowest the epsilon-greedy parameter can go
 
+def activationFunction(x, type = None):
+    if type is not None:
+        if type == 'RELU':
+            pass
+        elif type == 'TANH':
+            return (np.exp(x) - np.exp(-x)) / (np.exp(x) + np.exp(-x))
+        elif type == 'LRELU':
+            pass
+        elif type == 'SWISH':
+            pass
+        return 1 / (1 + np.exp(-x))
+    else:
+        return 1 / (1 + np.exp(-x))
 
-def sigmoid(x):
-    # return (np.exp(x) - np.exp(-x))/(np.exp(x)+np.exp(-x))
-    return 1 / (1 + np.exp(-x))
-
+def derivatedActivationFunction(x, type = None):
+    if type is not None:
+        if type == 'RELU':
+            pass
+        elif type == 'TANH':
+            return (np.exp(x) - np.exp(-x)) / (np.exp(x) + np.exp(-x))
+        elif type == 'LRELU':
+            pass
+        elif type == 'SWISH':
+            pass
+        return x * (1 - x)
+    else:
+        return x * (1 - x)
 
 def initWeights(nb_rows, nb_columns):
     return np.random.normal(0, 0.0001, (nb_rows, nb_columns))
@@ -19,27 +41,23 @@ def createNN(n_input, n_hidden):
     return (W_int, W_out)
 
 
-def forwardPass(s, NN):
+def forwardPass(s, NN, type = None):
     W_int = NN[0]
     W_out = NN[1]
-    P_int = sigmoid(np.dot(W_int, s))
-    p_out = sigmoid(P_int.dot(W_out))
+    P_int = activationFunction(np.dot(W_int, s), type)
+    p_out = activationFunction(P_int.dot(W_out), type)
     return p_out
 
 
-def backpropagation(s, NN, delta, learning_strategy=None):
+def backpropagation(s, NN, delta, learning_strategy=None, type = None):
     if learning_strategy is None:
         return None
     W_int = NN[0]
     W_out = NN[1]
-    P_int = sigmoid(np.dot(W_int, s))
-    p_out = sigmoid(P_int.dot(W_out))
-    # Avec tangente hyperbolique
-    grad_out = 1 - p_out ** 2
-    grad_int = 1 - P_int ** 2
-    # Avec sigmoide
-    grad_out = p_out * (1 - p_out)
-    grad_int = P_int * (1 - P_int)
+    P_int = activationFunction(np.dot(W_int, s), type)
+    p_out = activationFunction(P_int.dot(W_out), type)
+    grad_out = derivatedActivationFunction(p_out, type)
+    grad_int = derivatedActivationFunction(P_int, type)
     Delta_int = grad_out * W_out * grad_int
     if learning_strategy[0] == 'Q-learning':
         alpha = learning_strategy[1]
@@ -58,63 +76,54 @@ def backpropagation(s, NN, delta, learning_strategy=None):
         W_out -= alpha * delta * Z_out
 
 
-def makeMove(moves, s, color, NN, eps, learning_strategy=None, numberTrains=0):
+def makeMove(moves, s, color, NN, eps, learning_strategy=None, numberTrains=0, type = None):
     Q_learning = (not learning_strategy is None) and (learning_strategy[0] == 'Q-learning')
     TD_lambda = (not learning_strategy is None) and (learning_strategy[0] == 'TD-lambda')
     # Epsilon greedy
     # Quand on compare 2 IA, on n'utilise plus cette formule
     eps = max((0.99 ** numberTrains) * eps, EPS_MIN)
     greedy = random.random() > eps
-    # print(eps)
 
-    # dans le cas greedy, on recherche le meilleur mouvement (état) possible. Dans le cas du Q-learning (même sans greedy), on a besoin de connaître
-    # la probabilité estimée associée au meilleur mouvement (état) possible en vue de réaliser la backpropagation.
     if greedy or Q_learning:
         best_moves = []
         best_value = None
         c = 1
         if color == 1:
-            # au cas où c'est noir qui joue, on s'interessera aux pires coups du point de vue de blanc
             c = -1
         for m in moves:
-            val = forwardPass(m, NN)
-            if best_value == None or c * val > c * best_value:  # si noir joue, c'est comme si on regarde alors si val < best_value
+            val = forwardPass(m, NN, type)
+            if best_value == None or c * val > c * best_value:
                 best_moves = [m]
                 best_value = val
             elif val == best_value:
                 best_moves.append(m)
     if greedy:
-        # on prend un mouvement au hasard parmi les meilleurs (pires si noir)
         new_s = best_moves[random.randint(0, len(best_moves) - 1)]
     else:
-        # on choisit un mouvement au hasard
         new_s = moves[random.randint(0, len(moves) - 1)]
-        # on met à jour les poids si nécessaire
     if Q_learning or TD_lambda:
-        p_out_s = forwardPass(s, NN)
+        p_out_s = forwardPass(s, NN, type)
         if Q_learning:
             delta = p_out_s - best_value
         elif TD_lambda:
             if greedy:
                 p_out_new_s = best_value
             else:
-                p_out_new_s = forwardPass(new_s, NN)
+                p_out_new_s = forwardPass(new_s, NN, type)
             delta = p_out_s - p_out_new_s
-        backpropagation(s, NN, delta, learning_strategy)
+        backpropagation(s, NN, delta, learning_strategy, type)
 
     return new_s
 
 
-def endGame(s, won, NN, learning_strategy):
+def endGame(s, won, NN, learning_strategy, type = None):
     Q_learning = (not learning_strategy is None) and (learning_strategy[0] == 'Q-learning')
     TD_lambda = (not learning_strategy is None) and (learning_strategy[0] == 'TD-lambda')
-    # on met à jour les poids si nécessaire
     if Q_learning or TD_lambda:
-        p_out_s = forwardPass(s, NN)
+        p_out_s = forwardPass(s, NN, type)
         delta = p_out_s - won
-        backpropagation(s, NN, delta, learning_strategy)
+        backpropagation(s, NN, delta, learning_strategy, type)
         if TD_lambda:
-            # on remet les eligibility traces à 0 en prévision de la partie suivante
             learning_strategy[3].fill(0)  # remet Z_int à 0
             learning_strategy[4].fill(0)  # remet Z_out à 0
 
