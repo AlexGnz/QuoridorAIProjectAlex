@@ -1,35 +1,43 @@
+'''
+
+Projet d'année partie 4
+Alexandre Gonze - 439738
+BA1 INFO
+06/04/2019
+
+'''
+
+
 import numpy as np
 import random
 
 EPS_MIN = 0.06  # the lowest the epsilon-greedy parameter can go
 
+'''
+
+NOUVELLE METHODE
+Possibilité de changer de type de fonction d'activation
+
+'''
 def activationFunction(x, type = None):
     if type is not None:
-        if type == 'RELU':
-            pass
-        elif type == 'TANH':
+        if type == 'TANH':
             return (np.exp(x) - np.exp(-x)) / (np.exp(x) + np.exp(-x))
-        elif type == 'LRELU':
-            pass
         elif type == 'SWISH':
-            pass
-        return 1 / (1 + np.exp(-x))
-    else:
-        return 1 / (1 + np.exp(-x))
+            return (x / (1 + np.exp(-x)))
+    return 1 / (1 + np.exp(-x))
 
+'''
+NOUVELLE METHODE
+Il fallait également adapter la dérivée des fonctions d'activation en fonction du type sélectionné!
+'''
 def derivatedActivationFunction(x, type = None):
     if type is not None:
-        if type == 'RELU':
-            pass
-        elif type == 'TANH':
+        if type == 'TANH':
             return (np.exp(x) - np.exp(-x)) / (np.exp(x) + np.exp(-x))
-        elif type == 'LRELU':
-            pass
         elif type == 'SWISH':
-            pass
-        return x * (1 - x)
-    else:
-        return x * (1 - x)
+            return (np.exp(x)*(np.exp(x)+x+1))/((np.exp(x)+1)**2)
+    return x * (1 - x)
 
 def initWeights(nb_rows, nb_columns):
     return np.random.normal(0, 0.0001, (nb_rows, nb_columns))
@@ -63,7 +71,7 @@ def backpropagation(s, NN, delta, learning_strategy=None, type = None):
         alpha = learning_strategy[1]
         W_int -= alpha * delta * np.outer(Delta_int, s)
         W_out -= alpha * delta * grad_out * P_int
-    elif learning_strategy[0] == 'TD-lambda':
+    elif learning_strategy[0] == 'TD-lambda' or learning_strategy[0] == 'Q-lambda':
         alpha = learning_strategy[1]
         lamb = learning_strategy[2]
         Z_int = learning_strategy[3]
@@ -76,12 +84,19 @@ def backpropagation(s, NN, delta, learning_strategy=None, type = None):
         W_out -= alpha * delta * Z_out
 
 
+'''
+METHODE MODIFIEE
+- Ajout d'une variante de eps-greedy : On prend le maximum entre un eps minimum définit et 0.99 exposant le nombre de parties déjà effectuées, multipliées par eps 
+Cela réduit eps petit à petit, jusqu'à arriver au eps minimum
+- Ajout de Q-lambda, qui remet les eligibility traces à 0 quand on choisit un 
+'''
 def makeMove(moves, s, color, NN, eps, learning_strategy=None, numberTrains=0, type = None):
     Q_learning = (not learning_strategy is None) and (learning_strategy[0] == 'Q-learning')
     TD_lambda = (not learning_strategy is None) and (learning_strategy[0] == 'TD-lambda')
+    Q_lambda = (not learning_strategy is None) and (learning_strategy[0] == 'Q-lambda')
     # Epsilon greedy
     # Quand on compare 2 IA, on n'utilise plus cette formule
-    eps = max((0.99 ** numberTrains) * eps, EPS_MIN)
+    #eps = max((0.99 ** numberTrains) * eps, EPS_MIN)
     greedy = random.random() > eps
 
     if greedy or Q_learning:
@@ -101,30 +116,55 @@ def makeMove(moves, s, color, NN, eps, learning_strategy=None, numberTrains=0, t
         new_s = best_moves[random.randint(0, len(best_moves) - 1)]
     else:
         new_s = moves[random.randint(0, len(moves) - 1)]
-    if Q_learning or TD_lambda:
+    if Q_learning or TD_lambda or Q_lambda:
         p_out_s = forwardPass(s, NN, type)
         if Q_learning:
             delta = p_out_s - best_value
-        elif TD_lambda:
+        elif TD_lambda or Q_lambda:
             if greedy:
                 p_out_new_s = best_value
             else:
                 p_out_new_s = forwardPass(new_s, NN, type)
+                if Q_lambda:
+                    # Attention, seulement si ce n'est pas le meilleur mouvement qui aurait pu etre pris aléatoirement
+                    best_value_2 = getBestValue(moves, NN, color, type)
+                    if p_out_new_s < best_value_2:
+                        eligibilityTracesToZero(learning_strategy)
             delta = p_out_s - p_out_new_s
         backpropagation(s, NN, delta, learning_strategy, type)
 
     return new_s
 
+def getBestValue(moves, NN, color, type = None):
+    best_value = None
+    c = 1
+    if color == 1:
+        c = -1
+    for m in moves:
+        val = forwardPass(m, NN, type)
+        if best_value == None or c * val > c * best_value:
+            best_value = val
+    return best_value
 
+'''
+METHODE MODIFIEE
+Ajout de la stratégie d'apprentissage Q-lambda
+'''
 def endGame(s, won, NN, learning_strategy, type = None):
     Q_learning = (not learning_strategy is None) and (learning_strategy[0] == 'Q-learning')
     TD_lambda = (not learning_strategy is None) and (learning_strategy[0] == 'TD-lambda')
-    if Q_learning or TD_lambda:
+    Q_lambda = (not learning_strategy is None) and (learning_strategy[0] == 'Q-lambda')
+    if Q_learning or TD_lambda or Q_lambda:
         p_out_s = forwardPass(s, NN, type)
         delta = p_out_s - won
         backpropagation(s, NN, delta, learning_strategy, type)
-        if TD_lambda:
-            learning_strategy[3].fill(0)  # remet Z_int à 0
-            learning_strategy[4].fill(0)  # remet Z_out à 0
+        if TD_lambda or Q_lambda:
+            eligibilityTracesToZero(learning_strategy)
 
-
+'''
+NOUVELLE METHODE
+Simplement pour remettre les eligibility traces à zéro, vu que c'est utilisé à plusieurs endroits, on en fait une fonction
+'''
+def eligibilityTracesToZero(learning_strategy):
+    learning_strategy[3].fill(0)
+    learning_strategy[4].fill(0)

@@ -619,7 +619,7 @@ def train(NN, n_train=10000):
     if LS == 'Q-learning':
         learning_strategy1 = (LS, ALPHA)
         learning_strategy2 = (LS, ALPHA)
-    elif LS == 'TD-lambda':
+    elif LS == 'TD-lambda' or LS == 'Q-lambda':
         learning_strategy1 = (LS, ALPHA, LAMB, np.zeros(NN[0].shape), np.zeros(NN[1].shape))
         learning_strategy2 = (LS, ALPHA, LAMB, np.zeros(NN[0].shape), np.zeros(NN[1].shape))
     agent1 = Player_AI(NN, EPS, learning_strategy1, 'agent 1')
@@ -696,7 +696,8 @@ def main():
              ['eps 0.2', "# change la valeur de eps pour l'apprentissage (idem pour alpha, lambda)"],
              ['TD-lambda', "# choisit la stratégie d'apprentissage TD-lambda"],
              ['Q-learning', "# choisit la stratégie d'apprentissage Q-learning"],
-             ['type', "# choisit la fonction d'activation utilisée (SIGMOID, RELU, TANH, LRELU, ou SWISH)"],
+             ['Q-lambda', "# choisit la stratégie d'apprentissage Q-lambda"],
+             ['type', "# choisit la fonction d'activation utilisée (SIGMOID, TANH, ou SWISH)"],
              ['quit', ""]]
         offset1 = 2
         offset2 = 35
@@ -777,6 +778,8 @@ def main():
                 LS = 'Q-learning'
             elif L[0] == 'TD-lambda' and len(L) == 1:
                 LS = 'TD-lambda'
+            elif L[0] == 'Q-lambda' and len(L) == 1:
+                LS = 'Q-lambda'
             elif L[0] == 'type' and len(L) == 2:
                 TYPE = L[1]
             elif L[0] == 'quit':
