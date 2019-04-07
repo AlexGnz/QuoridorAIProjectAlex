@@ -1,6 +1,15 @@
 ### Partie 2 du projet INFOF106 2018-19 -- code de la boucle principale
 ### Gwenael Joret
 
+'''
+
+Projet d'année partie 4
+Alexandre Gonze - 439738
+BA1 INFO
+07/04/2019
+
+'''
+
 import copy, os, time, sys, random, time
 from select import select
 import numpy as np
@@ -8,7 +17,8 @@ from IA_partie4 import *
 
 N = 5  # N*N board
 WALLS = 3  # number of walls each player has
-EPS = 0.2  # epsilon in epsilon-greedy
+EPS = 0.5 # Quand on utilise eps-greedy décroissant
+#EPS = 0.2  # Quand on utilise epsilon constant epsilon in epsilon-greedy
 ALPHA = 0.4  # learning_rate
 LAMB = 0.9  # lambda for TD(lambda)
 LS = 'Q-learning'  # default learning strategy

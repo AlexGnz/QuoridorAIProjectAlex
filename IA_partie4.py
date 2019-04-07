@@ -3,7 +3,7 @@
 Projet d'année partie 4
 Alexandre Gonze - 439738
 BA1 INFO
-06/04/2019
+07/04/2019
 
 '''
 
@@ -14,10 +14,8 @@ import random
 EPS_MIN = 0.06  # the lowest the epsilon-greedy parameter can go
 
 '''
-
 NOUVELLE METHODE
 Possibilité de changer de type de fonction d'activation
-
 '''
 def activationFunction(x, type = None):
     if type is not None:
@@ -26,6 +24,7 @@ def activationFunction(x, type = None):
         elif type == 'SWISH':
             return (x / (1 + np.exp(-x)))
     return 1 / (1 + np.exp(-x))
+
 
 '''
 NOUVELLE METHODE
@@ -94,9 +93,10 @@ def makeMove(moves, s, color, NN, eps, learning_strategy=None, numberTrains=0, t
     Q_learning = (not learning_strategy is None) and (learning_strategy[0] == 'Q-learning')
     TD_lambda = (not learning_strategy is None) and (learning_strategy[0] == 'TD-lambda')
     Q_lambda = (not learning_strategy is None) and (learning_strategy[0] == 'Q-lambda')
-    # Epsilon greedy
-    # Quand on compare 2 IA, on n'utilise plus cette formule
-    #eps = max((0.99 ** numberTrains) * eps, EPS_MIN)
+    # Epsilon greedy décroissant : Permet de fort inciter à l'exploration au début et réduit au fur et à mesure la probabilité d'effectuer des coups non optimaux.
+    # Affine donc ses mouvements au fil du temps
+    # En ayant un epsilon constant, il faut trouver le juste milieu entre exploitation et exploration, ici on fait les deux, au fur et à mesure
+    eps = max((0.99 ** numberTrains) * eps, EPS_MIN)
     greedy = random.random() > eps
 
     if greedy or Q_learning:
@@ -135,6 +135,10 @@ def makeMove(moves, s, color, NN, eps, learning_strategy=None, numberTrains=0, t
 
     return new_s
 
+'''
+NOUVELLE METHODE
+Permet de déterminer si le mouvement aléatoire choisi était le mouvement optimal, ou pas, et d'ainsi mettre les eligibility traces à 0, ou pas
+'''
 def getBestValue(moves, NN, color, type = None):
     best_value = None
     c = 1
