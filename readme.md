@@ -1,7 +1,3 @@
-EÉtant donné que la correction de la partie 3 n'était pas fonctionnelle (crash lors de l'utilisation de certaines fonctions), je suis reparti sur la base de la partie 2.
+The base part of this code was provided by the teacher Gwenaël Joret.
 
-Les éléments modifiées ont été indiqués par des commentaires de type :
-NOUVELLE METHODE
-ou 
-METHODE MODIFIEE
-
+This project was a Year Project where we had to create the best AI possible using the correct activations functions, the correct parameters etc.
